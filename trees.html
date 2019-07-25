@@ -3,11 +3,18 @@
 		<title>Trees Two</title>
 		<style>
 			body { margin: 0; }
+            button {
+                position: absolute;
+                width: 150px;
+                height: 50px;
+            }
         </style>
 		<script src="./two.js"></script>        
 		<script src="./space-colonization.js"></script>        
+        <script src="./draw.js"></script>        
 	</head>
 	<body>
+        <button id="colonize-button">COLONIZE</button>
         <div id='two-js-canvas'></div>
 		<script>
             // init two
@@ -24,65 +31,54 @@
             var branchLength = 5;
             var numJoints = 2000;
 
-            // Initialize random targets
-            targets = []
-            for (i = 0; i<numTargets; i++) {
-                var radius = Math.random()*200 + 20;
-                var angle = Math.random()*2*Math.PI // Random angle between 0 & 2Pi (a circle)
-                x = Math.cos(angle)*radius;
-                y = Math.sin(angle)*radius + 400;
-                
-                targets.push(new Node(x, y));
-                rects.push({x: x, y: y, width: 5, height: 5, color: 'rgb(200, 80, 120)'})
+            function generateRandomTargets() {
+                var targets = [];
+                // Initialize random targets
+                for (i = 0; i<numTargets; i++) {
+                    var radius = Math.random()*200 + 20;
+                    var angle = Math.random()*2*Math.PI // Random angle between 0 & 2Pi (a circle)
+                    x = Math.cos(angle)*radius;
+                    y = Math.sin(angle)*radius + 400;
+                    
+                    targets.push(new Node(x, y));
+                    rects.push({x: x, y: y, width: 5, height: 5, color: 'rgb(200, 80, 120)'})
+                }
+                return targets
             }
 
-            // run colonization
-            startNode = new Node(10,10);
-            colonization(targets, startNode, captureRadius, branchLength, numJoints)
-            
-            // convert recursive structure to list of points
-            var listPoints = node => {
-                list = [{
-                    x: node.x,
-                    y: node.y,
+            var targets = [];
+            function getUserGeneratedTargets(event) {
+                event.preventDefault()
+                var translatedX = (event.clientX - screenWidth/2);
+                var translatedY = screenHeight - event.clientY;
+
+                targets.push(new Node(translatedX, translatedY));
+                rects.push({
+                    x: translatedX,
+                    y: translatedY,
                     width: 5,
                     height: 5,
-                }]
-                node.childNodes.forEach(child => {
-                    list = list.concat(listPoints(child))
-                });
-                return list
+                    color: 'rgb(200, 80, 120)',
+                })
             }
-            
-            rects = rects.concat(listPoints(startNode))
+            document.addEventListener("click", getUserGeneratedTargets);
 
-            console.log(startNode)
-            
-            // draw objects
-            sceneObjects = []
-            sceneObjects = rects.map(rect => {
-                var newRect = two.makeRectangle(
-                    rect.x, 
-                    rect.y, 
-                    rect.width, 
-                    rect.height);
-                newRect.fill = rect.color || 'rgb(0, 200, 255)';
-                newRect.opacity = 0.75;
-                newRect.noStroke();
-                return newRect;
+            document.getElementById('colonize-button').addEventListener('click', () => {
+                // targets = generateRandomTargets();
+                // run colonization
+                startNode = new Node(10,10);
+                colonization(targets, startNode, captureRadius, branchLength, numJoints);
+                draw(rects, startNode);
             })
 
-            // group objects, transform scene, flip y axis
-            sceneGroup = two.makeGroup(sceneObjects);
-            sceneGroup.translation = new Two.Vector(screenWidth/2, screenHeight);
-            sceneGroup._matrix.manual = true;
-            sceneGroup._matrix
-                .identity()
-                .translate(sceneGroup.translation.x, sceneGroup.translation.y)
-                .rotate(sceneGroup.rotation)
-                .scale(1, -1);
 
-            two.update();
+
+            function printMousePos(event) {
+              console.log("clientX: ", event.clientX)
+              console.log(" - clientY: ", event.clientY)
+            }
+
+            document.addEventListener("click", printMousePos);
 		</script>
 	</body>
 </html>
