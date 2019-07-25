@@ -92,8 +92,9 @@ function colonization(targets, startJoint, startDist, scaling, noise, captureFra
         
         const target = remainingTargets[0];
         const connectingJoint = target.closestJoint;
-        var branchLength = Math.max(connectingJoint.parentDistance() * scaling * (1 + noise*randn_bm()), minBranchLength);
-        if(connectingJoint.parent === null) branchLength = startDist; // This is the root
+        var branchLength = connectingJoint.parentJoint === null ?
+                            startDist :
+                            Math.max(connectingJoint.parentDistance() * scaling * (1 + noise*randn_bm()), minBranchLength);
         const factor = branchLength/target.closestDist;
         const dx = (target.x - connectingJoint.x) * factor;
         const dy = (target.y - connectingJoint.y) * factor;
