@@ -1,0 +1,133 @@
+<html>
+	<head>
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="https://threejs.org/build/three.js"></script>
+		<script>
+            var geom = new THREE.Geometry(); 
+            var v1 = new THREE.Vector3(-.5,0,-.5);
+            var v2 = new THREE.Vector3(.5,0,-.5);
+            var v3 = new THREE.Vector3(.5,1,-.5);
+            var v4 = new THREE.Vector3(-.5,1,-.5);
+            var v5 = new THREE.Vector3(-.5,0,.5);
+            var v6 = new THREE.Vector3(.5,0,.5);
+            var v7 = new THREE.Vector3(.5,1,.5);
+            var v8 = new THREE.Vector3(-.5,1,.5);
+
+            geom.vertices.push(v1);
+            geom.vertices.push(v2);
+            geom.vertices.push(v3);
+            geom.vertices.push(v4);
+            geom.vertices.push(v5);
+            geom.vertices.push(v6);
+            geom.vertices.push(v7);
+            geom.vertices.push(v8);
+
+            geom.faces.push( new THREE.Face3(0,3,2,1) );
+            geom.faces.push( new THREE.Face3(2,1,0) );
+            geom.faces.push( new THREE.Face3(2,3,7,6) );
+            geom.faces.push( new THREE.Face3(7,6,2) );
+            geom.faces.push( new THREE.Face3(0,4,7,3) );
+            geom.faces.push( new THREE.Face3(7,3,0) );
+            geom.faces.push( new THREE.Face3(1,2,6,5) );
+            geom.faces.push( new THREE.Face3(6,5,1) );
+            geom.faces.push( new THREE.Face3(4,5,6,7) );
+            geom.faces.push( new THREE.Face3(6,7,4) );
+            geom.faces.push( new THREE.Face3(0,1,5,4) );
+            geom.faces.push( new THREE.Face3(5,4,0) );
+
+            geom.computeFaceNormals();
+            geom.computeVertexNormals();
+            
+
+
+			var scene = new THREE.Scene();
+			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+			
+            camera.position.z = 7;
+            camera.position.y = 3;
+
+
+			// var branchGeometry = new THREE.BoxGeometry( 1, 1, 1 );
+
+			var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+
+			var branch = new THREE.Mesh( geom, material );
+            branch.scale.y *= 4;
+            
+            var group = new THREE.Group();
+            
+            // branch.translateOnAxis(new THREE.Vector3( 1, 0, 0 ), 1);
+            var addBranches = (parent, iterations) => {
+                if (iterations < 1) {
+                    return undefined;
+                }
+                var child1 = new THREE.Mesh( geom, material );
+                child1.rotation.copy(parent.rotation);
+                child1.position.copy(parent.position);
+                child1.translateOnAxis(parent.up, parent.scale.y);
+                
+                child1.rotateOnAxis(new THREE.Vector3(Math.random(),Math.random(),Math.random()), 1);
+                child1.scale.multiply(parent.scale);
+                child1.scale.multiplyScalar(.5);
+
+                var child2 = new THREE.Mesh( geom, material );
+                child2.rotation.copy(parent.rotation);
+                child2.position.copy(parent.position);
+                child2.translateOnAxis(parent.up, parent.scale.y);
+                
+                child2.rotateOnAxis(new THREE.Vector3(Math.random(),Math.random(),Math.random()), 1);
+                child2.scale.multiply(parent.scale);
+                child2.scale.multiplyScalar(.5);
+                console.log(iterations)
+                return [
+                    {
+                        model: child1,
+                        children: addBranches(child1, iterations-1),
+                    },
+                    {
+                        model: child2,
+                        children: addBranches(child2, iterations-1),
+                    },
+                ]
+            }
+            tree = {
+                model: branch,
+                children: addBranches(branch, 2),
+            }
+
+            group.add(tree.model)
+            group.add(tree.children[0].model)
+            group.add(tree.children[1].model)
+            group.add(tree.children[0].children[0].model)
+            group.add(tree.children[0].children[1].model)
+            group.add(tree.children[1].children[0].model)
+            group.add(tree.children[1].children[1].model)
+            // branch.rotateOnAxis(new THREE.Vector3( 0, 1, 0 ), 1)
+
+			scene.add( group );
+            window.branch = branch;
+            window.tree = tree;
+
+            window.group = group
+            var upVector = new THREE.Vector3( 0, 1, 0 );
+			var animate = function () {
+				requestAnimationFrame( animate );
+
+                group.rotateOnAxis(upVector, .01)
+
+				renderer.render( scene, camera );
+			};
+			animate();
+		</script>
+	</body>
+</html>
