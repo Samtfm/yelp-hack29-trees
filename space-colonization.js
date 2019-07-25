@@ -1,12 +1,18 @@
+
+// A note on terminology:
+// `Node` is the generalized term for all points
+// `Target` is a Node representing the resource points towards which the tree joints are growing
+//    - Although these also have `parent` property, they won't actually have a parent
+// `Joint` is a Node representing points on the tree which are growing towards targets
 class Node{
     constructor(x, y, parent){
         this.x = x;
         this.y = y;
-        this.parentNode = parent;
+        this.parentJoint = parent;
         this.closestDist = Number.MAX_VALUE;
-        this.closestNode = parent;
-        if(this.parentNode != null){
-            this.parentNode.childNodes.push(this);
+        this.closestJoint = parent;
+        if(this.parentJoint != null){
+            this.parentJoint.childNodes.push(this);
         }
         this.childNodes = [];
     }
@@ -16,7 +22,7 @@ class Node{
     }
 
     parentDistance(){
-        return this.parentNode ? this.distance(this.parentNode) : 4;
+        return this.parentJoint ? this.distance(this.parentJoint) : 4;
     }
 }
 
@@ -29,23 +35,23 @@ function randn_bm() {
     return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
 }
 
-function NodeSort(a, b){
+function TargetSort(a, b){
     return a.closestDist - b.closestDist;
 }
 
 /**
  * Implements space colonization algorithm for procedurally generating trees.
- * Returns: startNode. Null if preconditions violated.
+ * Returns: startJoint. Null if preconditions violated.
  * 
- * @param {Node[]} scaffolding: Array of Nodes that form the scaffold for the colonization algorithm.
- * @param {Node} startNode: Start location for the base of the tree.
+ * @param {Node[]} targets: Array of Nodes that form the scaffold for the colonization algorithm.
+ * @param {Node} startJoint: Start location for the base of the tree.
  * @param {number} startDist: Mean branch length for the trunk.
  * @param {number} scaling: Scaling factor for branch length. Must be 0 < x <= 1.
  * @param {number} noise: Branch length is a normal sample with mean branch length and std dev noise*length. Thus noise x >= 0 and should probably be <= .25.
- * @param {number} captureFraction: Fraction of previous branch necessary to capture scaffolding points. 0 < x < scaling
+ * @param {number} captureFraction: Fraction of previous branch necessary to capture targets points. 0 < x < scaling
  * @param {number} minBranchLength: Smallest length a branch can be to avoid infinite sum boundary.
  */
-function colonization(scaffolding, startNode, startDist, scaling, noise, captureFraction, minBranchLength){
+function colonization(targets, startJoint, startDist, scaling, noise, captureFraction, minBranchLength){
     // Check that pre-conditions are met.
     if(scaling <= 0 || scaling > 1){
         return null;
@@ -53,47 +59,47 @@ function colonization(scaffolding, startNode, startDist, scaling, noise, capture
     if(captureFraction <=0 || captureFraction >= scaling) return null;
     if(noise < 0) return null;
 
-    let remaining = scaffolding.slice(0); // Clone the array to edit it.
-    let newNode = startNode;
+    let remainingTargets = targets.slice(0); // Clone the array to edit it.
+    let currentJoint = startJoint;
     var counter = 0;
     while(counter < 1000){ //Hard cutoff on tree size.
-        // Update the closest node and associated distance in the array.
-        remaining.forEach(element => {
-            const dist = element.distance(newNode);
-            if(dist < element.closestDist){
-                element.closestDist = dist;
-                element.closestNode = newNode;
+        // Update the closest target and associated distance in the array.
+        remainingTargets.forEach(target => {
+            const dist = target.distance(currentJoint);
+            if(dist < target.closestDist){
+                target.closestDist = dist;
+                target.closestJoint = currentJoint;
             }
         });
 
-        // Capture nodes
-        for(var i = 0;i<remaining.length;i++){
-            if(newNode.parentNode === null) break;
-            if(remaining[i].closestDist <= newNode.parentDistance() * captureFraction){
-                remaining.splice(i,1);
+        // Capture targets
+        for(var i = 0;i<remainingTargets.length;i++){
+            if(currentJoint.parentJoint === null) break;
+            if(remainingTargets[i].closestDist <= currentJoint.parentDistance() * captureFraction){
+                remainingTargets.splice(i,1);
                 i--;
             }
         }
 
-        // Break if remaining is empty.
-        if(remaining.length == 0){
+        // Break if remainingTargets is empty.
+        if(remainingTargets.length == 0){
             break;
         }
 
-        // Sort Nodes based on distance to closest node of tree.
-        remaining.sort(NodeSort);
+        // Sort Targets based on distance to closest joint of tree.
+        remainingTargets.sort(TargetSort);
 
         
-        const target = remaining[0];
-        const connectingNode = target.closestNode;
-        var branchLength = Math.max(connectingNode.parentDistance() * scaling * (1 + noise*randn_bm()), minBranchLength);
-        if(connectingNode.parent === null) branchLength = startDist;
+        const target = remainingTargets[0];
+        const connectingJoint = target.closestJoint;
+        var branchLength = Math.max(connectingJoint.parentDistance() * scaling * (1 + noise*randn_bm()), minBranchLength);
+        if(connectingJoint.parent === null) branchLength = startDist; // This is the root
         const factor = branchLength/target.closestDist;
-        const dx = (target.x - connectingNode.x) * factor;
-        const dy = (target.y - connectingNode.y) * factor;
-        newNode = new Node(connectingNode.x+dx, connectingNode.y + dy, connectingNode);
+        const dx = (target.x - connectingJoint.x) * factor;
+        const dy = (target.y - connectingJoint.y) * factor;
+        currentJoint = new Node(connectingJoint.x+dx, connectingJoint.y + dy, connectingJoint);
         counter++;
     }
-    return startNode;
+    return startJoint;
 
 }

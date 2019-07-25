@@ -31,7 +31,12 @@
 
             // run colonization
             startNode = new Node(10,10);
-            colonization(targets, startNode, 10, 0.8, 0.15, 0.5, 10)
+            var startDist = 10;
+            var scaling = 0.8;
+            var noise = 0.15;
+            var captureFraction = 0.5;
+            var minBranchLength = 10;
+            colonization(targets, startNode, startDist, scaling, noise, captureFraction, minBranchLength)
             
             // convert recursive structure to list of points
             var listPoints = node => {
