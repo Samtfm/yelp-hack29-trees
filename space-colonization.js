@@ -3,7 +3,7 @@
 // `Target` is a Node representing the resource points towards which the tree joints are growing
 //    - Although these also have `parent` property, they won't actually have a parent
 // `Joint` is a Node representing points on the tree which are growing towards targets
-class Node{
+class Node{ 
     constructor(x, y, parent){
         this.x = x;
         this.y = y;
@@ -25,7 +25,7 @@ class Node{
     }
 }
 
-function getPullVector(joint, targets) {
+function _getPullVector(joint, targets) {
     vector = {dx:0, dy:0}
     targets.forEach(target => {
         dist = joint.distance(target)
@@ -36,7 +36,7 @@ function getPullVector(joint, targets) {
 }
 
 function generateChildJoint(joint, targets, branchLength) {
-    pullVector = getPullVector(joint, targets);
+    pullVector = _getPullVector(joint, targets);
     magnitude = Math.sqrt((pullVector.dx)**2 + (pullVector.dy**2));
     normalizedVector = {
         dx: (pullVector.dx / magnitude) * branchLength,
@@ -44,6 +44,16 @@ function generateChildJoint(joint, targets, branchLength) {
     }
     point = { x: joint.x + normalizedVector.dx, y: joint.y + normalizedVector.dy };
     return new Node(point.x, point.y, joint);
+}
+
+function getTargetsOfJoint(joint, targets){
+    ret = [];
+    targets.forEach(element => {
+        if(element.closestJoint === joint){
+            ret.push(element);
+        }
+    });
+    return ret;
 }
 
 // https://stackoverflow.com/questions/25582882/javascript-math-random-normal-distribution-gaussian-bell-curve/36481059#36481059
@@ -79,6 +89,7 @@ function colonization(targets, startJoint, startDist, scaling, noise, captureFra
     if(captureFraction <=0 || captureFraction >= scaling) return null;
     if(noise < 0) return null;
 
+
     let remainingTargets = targets.slice(0); // Clone the array to edit it.
     let currentJoint = startJoint;
     var counter = 0;
@@ -106,19 +117,19 @@ function colonization(targets, startJoint, startDist, scaling, noise, captureFra
             break;
         }
 
-        // Sort Targets based on distance to closest joint of tree.
+        // Select a connectingJoint and list of influencingTargets, based on which joint is closest to a target.
         remainingTargets.sort(TargetSort);
+        const closestTarget = remainingTargets[0];
+        const connectingJoint = closestTarget.closestJoint;
+        const influencingTargets = getTargetsOfJoint(connectingJoint, remainingTargets)
 
-        
-        const target = remainingTargets[0];
-        const connectingJoint = target.closestJoint;
+        // update branch length
         var branchLength = connectingJoint.parentJoint === null ?
                             startDist :
                             Math.max(connectingJoint.parentDistance() * scaling * (1 + noise*randn_bm()), minBranchLength);
-        const factor = branchLength/target.closestDist;
-        const dx = (target.x - connectingJoint.x) * factor;
-        const dy = (target.y - connectingJoint.y) * factor;
-        currentJoint = new Node(connectingJoint.x+dx, connectingJoint.y + dy, connectingJoint);
+
+        // place new joint!
+        currentJoint = generateChildJoint(connectingJoint, influencingTargets, branchLength)
         counter++;
     }
     return startJoint;

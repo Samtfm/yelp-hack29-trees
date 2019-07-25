@@ -1,19 +1,19 @@
 var distance = (a, b) => {
-    return Math.sqrt((a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y));
+    return Math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2);
 }
 
-var getPullVector = (node, targets, travelDistance) => {
+var getPullVector = (joint, targets, travelDistance) => {
     vector = {x:0, y:0}
     var tooClose = false;
     targets.forEach(target => {
-        dist = distance(node, target)
+        dist = distance(joint, target)
         if (dist < travelDistance) {
             target.active = false;
             tooClose = true;
         }
         if (target.active) {
-            vector.x += (target.x - node.x)/(dist*dist)
-            vector.y += (target.y - node.y)/(dist*dist)
+            vector.x += (target.x - joint.x)/(dist*dist)
+            vector.y += (target.y - joint.y)/(dist*dist)
         }
     });
     if (tooClose) {
