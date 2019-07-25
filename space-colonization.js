@@ -46,14 +46,14 @@ function generateChildJoint(joint, targets, branchLength) {
     return new Node(point.x, point.y, joint);
 }
 
-function getTargetsOfJoint(joint, targets){
-    ret = [];
-    targets.forEach(element => {
-        if(element.closestJoint === joint){
-            ret.push(element);
+function getInfluencingTargets(joint, targets){
+    influencingTargets = [];
+    targets.forEach(target => {
+        if(target.closestJoint === joint){
+            influencingTargets.push(target);
         }
     });
-    return ret;
+    return influencingTargets;
 }
 
 // https://stackoverflow.com/questions/25582882/javascript-math-random-normal-distribution-gaussian-bell-curve/36481059#36481059
@@ -117,19 +117,19 @@ function colonization(targets, startJoint, startDist, scaling, noise, captureFra
             break;
         }
 
-        // Select a connectingJoint and list of influencingTargets, based on which joint is closest to a target.
+        // Select a frontierJoint (a new growth we're adding to the tree) and list of influencingTargets, based on which joint is closest to a target.
         remainingTargets.sort(TargetSort);
         const closestTarget = remainingTargets[0];
-        const connectingJoint = closestTarget.closestJoint;
-        const influencingTargets = getTargetsOfJoint(connectingJoint, remainingTargets)
+        const frontierJoint = closestTarget.closestJoint;
+        const influencingTargets = getInfluencingTargets(frontierJoint, remainingTargets)
 
         // update branch length
-        var branchLength = connectingJoint.parentJoint === null ?
-                            startDist :
-                            Math.max(connectingJoint.parentDistance() * scaling * (1 + noise*randn_bm()), minBranchLength);
+        var branchLength = (frontierJoint.parentJoint === null)
+            ? startDist
+            : Math.max(frontierJoint.parentDistance() * scaling * (1 + noise*randn_bm()), minBranchLength);
 
         // place new joint!
-        currentJoint = generateChildJoint(connectingJoint, influencingTargets, branchLength)
+        currentJoint = generateChildJoint(frontierJoint, influencingTargets, branchLength)
         counter++;
     }
     return startJoint;
