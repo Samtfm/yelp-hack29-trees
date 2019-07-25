@@ -1,4 +1,3 @@
-
 // A note on terminology:
 // `Node` is the generalized term for all points
 // `Target` is a Node representing the resource points towards which the tree joints are growing
@@ -24,6 +23,27 @@ class Node{
     parentDistance(){
         return this.parentJoint ? this.distance(this.parentJoint) : 4;
     }
+}
+
+function getPullVector(joint, targets) {
+    vector = {dx:0, dy:0}
+    targets.forEach(target => {
+        dist = joint.distance(target)
+        vector.dx += (target.x - joint.x)/(dist*dist)
+        vector.dy += (target.y - joint.y)/(dist*dist)
+    });
+    return vector;
+}
+
+function generateChildJoint(joint, targets, branchLength) {
+    pullVector = getPullVector(joint, targets);
+    magnitude = Math.sqrt((pullVector.dx)**2 + (pullVector.dy**2));
+    normalizedVector = {
+        dx: (pullVector.dx / magnitude) * branchLength,
+        dy: (pullVector.dy / magnitude) * branchLength,
+    }
+    point = { x: joint.x + normalizedVector.dx, y: joint.y + normalizedVector.dy };
+    return new Node(point.x, point.y, joint);
 }
 
 // https://stackoverflow.com/questions/25582882/javascript-math-random-normal-distribution-gaussian-bell-curve/36481059#36481059
@@ -102,5 +122,4 @@ function colonization(targets, startJoint, startDist, scaling, noise, captureFra
         counter++;
     }
     return startJoint;
-
 }
