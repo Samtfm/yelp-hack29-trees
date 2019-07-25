@@ -11,19 +11,22 @@
         <div id='two-js-canvas'></div>
 		<script>
             // init two
+            var screenWidth = window.innerWidth
+            var screenHeight = window.innerHeight
             var elem = document.getElementById('two-js-canvas');
-            var params = { width: 600, height: 500 };
+            var params = { width: screenWidth, height: screenHeight };
             var two = new Two(params).appendTo(elem);
 
             rects = []
 
             // generate random targets
+            numTargets = 200;
             targets = []
-            for (i = 0; i<40; i++) {
-                var radius = Math.random()*200 + 100;
-                var angle = Math.random()*Math.PI*2*.5+(Math.PI*2);
+            for (i = 0; i<numTargets; i++) {
+                var radius = Math.random()*200 + 20;
+                var angle = Math.random()*2*Math.PI // Random angle between 0 & Pi (half a circle)
                 x = Math.cos(angle)*radius;
-                y = Math.sin(angle)*radius+100;
+                y = Math.sin(angle)*radius + 400;
                 
                 targets.push(new Node(x, y));
                 rects.push({x: x, y: y, width: 10, height: 10, color: 'rgb(200, 80, 120)'})
@@ -34,9 +37,10 @@
             var startDist = 10;
             var scaling = 0.8;
             var noise = 0.15;
-            var captureFraction = 0.5;
+            var captureRadius = 20;
             var minBranchLength = 10;
-            colonization(targets, startNode, startDist, scaling, noise, captureFraction, minBranchLength)
+            var numJoints = 2000;
+            colonization(targets, startNode, startDist, scaling, noise, captureRadius, minBranchLength, numJoints)
             
             // convert recursive structure to list of points
             var listPoints = node => {
@@ -72,7 +76,7 @@
 
             // group objects, transform scene, flip y axis
             sceneGroup = two.makeGroup(sceneObjects);
-            sceneGroup.translation = new Two.Vector(300, 400);
+            sceneGroup.translation = new Two.Vector(screenWidth/2, screenHeight);
             sceneGroup._matrix.manual = true;
             sceneGroup._matrix
                 .identity()

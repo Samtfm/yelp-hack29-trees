@@ -78,22 +78,21 @@ function TargetSort(a, b){
  * @param {number} startDist: Mean branch length for the trunk.
  * @param {number} scaling: Scaling factor for branch length. Must be 0 < x <= 1.
  * @param {number} noise: Branch length is a normal sample with mean branch length and std dev noise*length. Thus noise x >= 0 and should probably be <= .25.
- * @param {number} captureFraction: Fraction of previous branch necessary to capture targets points. 0 < x < scaling
+ * @param {number} captureRadius: Distance from a joint to a target to consider the target "captured"
  * @param {number} minBranchLength: Smallest length a branch can be to avoid infinite sum boundary.
  */
-function colonization(targets, startJoint, startDist, scaling, noise, captureFraction, minBranchLength){
+function colonization(targets, startJoint, startDist, scaling, noise, captureRadius, minBranchLength, numJoints){
     // Check that pre-conditions are met.
     if(scaling <= 0 || scaling > 1){
         return null;
     }
-    if(captureFraction <=0 || captureFraction >= scaling) return null;
     if(noise < 0) return null;
 
 
     let remainingTargets = targets.slice(0); // Clone the array to edit it.
     let currentJoint = startJoint;
     var counter = 0;
-    while(counter < 1000){ //Hard cutoff on tree size.
+    while(counter < numJoints){ //Hard cutoff on tree size.
         // Update the closest target and associated distance in the array.
         remainingTargets.forEach(target => {
             const dist = target.distance(currentJoint);
@@ -106,7 +105,7 @@ function colonization(targets, startJoint, startDist, scaling, noise, captureFra
         // Capture targets
         for(var i = 0;i<remainingTargets.length;i++){
             if(currentJoint.parentJoint === null) break;
-            if(remainingTargets[i].closestDist <= currentJoint.parentDistance() * captureFraction){
+            if(remainingTargets[i].closestDist <= captureRadius){
                 remainingTargets.splice(i,1);
                 i--;
             }
@@ -124,12 +123,12 @@ function colonization(targets, startJoint, startDist, scaling, noise, captureFra
         const influencingTargets = getInfluencingTargets(frontierJoint, remainingTargets)
 
         // update branch length
-        var branchLength = (frontierJoint.parentJoint === null)
-            ? startDist
-            : Math.max(frontierJoint.parentDistance() * scaling * (1 + noise*randn_bm()), minBranchLength);
+        // var branchLength = (frontierJoint.parentJoint === null)
+        //     ? startDist
+        //     : Math.max(frontierJoint.parentDistance() * scaling * (1 + noise*randn_bm()), minBranchLength);
 
         // place new joint!
-        currentJoint = generateChildJoint(frontierJoint, influencingTargets, branchLength)
+        currentJoint = generateChildJoint(frontierJoint, influencingTargets, minBranchLength)
         counter++;
     }
     return startJoint;
