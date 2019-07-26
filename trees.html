@@ -32,16 +32,16 @@
             var numTargets = 100;
             var captureRadius = 14;
             var branchLength = 10;
-            var numJoints = 300;
+            var numJoints = 1000;
 
             function generateRandomTargets() {
                 var targets = [];
                 // Initialize random targets
                 for (i = 0; i<numTargets; i++) {
-                    var radius = Math.random()*200 + 20;
+                    var radius = Math.random()*400 + 20;
                     var angle = Math.random()*2*Math.PI // Random angle between 0 & 2Pi (a circle)
                     x = Math.cos(angle)*radius;
-                    y = Math.sin(angle)*radius + 400;
+                    y = Math.sin(angle)*radius + 450;
                     
                     targets.push(new Node(x, y));
                     rects.push({x: x, y: y, width: 5, height: 5, color: 'rgb(200, 80, 120)'})
@@ -72,9 +72,11 @@
                 userGeneratedTargets.push(new Node(translatedX, translatedY));
             }
             document.addEventListener("click", getUserGeneratedTargets);
-
+            
             document.getElementById('colonize-button').addEventListener('click', (event) => {
                 event.preventDefault()
+                targets = [];
+                rects = [];
                 // create tree
                 startJoint = new Node(10,10);
                 var tree = new Tree(

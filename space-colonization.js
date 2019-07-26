@@ -48,11 +48,11 @@ function generateChildJoint(joint, targets, branchLength) {
 
 function getInfluencingTargets(joint, targets){
     influencingTargets = [];
-    targets.forEach(target => {
+    for (let target of targets){
         if(target.closestJoint === joint){
             influencingTargets.push(target);
         }
-    });
+    }
     return influencingTargets;
 }
 
@@ -85,47 +85,60 @@ class Tree{
         this.captureRadius = captureRadius
         this.branchLength = branchLength
         this.numJoints = numJoints
-        this.remainingTargets = targets.slice(0); // Clone the array to edit it.
+        this.remainingTargets = new Set(targets); // Clone the array to edit it.
         this.currentJoint = startJoint
         this.counter = 0
+        this.growableJoints = [startJoint];
+        this.allJointsList = [startJoint]
     }
     
-    grow(){
+    step(){
         if (this.counter > this.numJoints) { 
             return null; 
         }
 
-        // Update the closest target and associated distance in the array.
-        this.remainingTargets.forEach(target => {
+        for (var target of this.remainingTargets) {
             const dist = target.distance(this.currentJoint);
-            if(dist < target.closestDist){
+            if (dist < this.captureRadius){
+                // capture target
+                this.remainingTargets.delete(target);
+            } else if (dist < target.closestDist){
+                // Update the closest target and associated distance in the array.
                 target.closestDist = dist;
                 target.closestJoint = this.currentJoint;
             }
-        });
-
-        // Capture targets
-        for(var i = 0;i<this.remainingTargets.length;i++){
-            if(this.currentJoint.parentJoint === null) break;
-            if(this.remainingTargets[i].closestDist <= this.captureRadius){
-                this.remainingTargets.splice(i,1);
-                i--;
-            }
         }
+
         // Break if this.remainingTargets is empty.
-        if(this.remainingTargets.length == 0){
+        if(this.remainingTargets.size == 0){
             return null;
         }
 
-        // Select a frontierJoint (a new growth we're adding to the tree) and list of influencingTargets, based on which joint is closest to a target.
-        this.remainingTargets.sort(TargetSort);
-        const closestTarget = this.remainingTargets[0];
-        const frontierJoint = closestTarget.closestJoint;
-        const influencingTargets = getInfluencingTargets(frontierJoint, this.remainingTargets)
+        let influencingTargets = [];
+        while (this.growableJoints.length > 0){
+            influencingTargets = getInfluencingTargets(this.growableJoints[0], this.remainingTargets)
+            if (influencingTargets.length > 0){
+                break;
+            } else {
+                this.growableJoints.shift();
+            }
+        }
+
+        if (this.growableJoints.length === 0){
+            return null;
+        }
 
         // place new joint!
-        this.currentJoint = generateChildJoint(frontierJoint, influencingTargets, this.branchLength)
+        this.currentJoint = generateChildJoint(this.growableJoints[0], influencingTargets, this.branchLength)
+        this.growableJoints.push(this.currentJoint);
+        this.allJointsList.push(this.currentJoint);
         this.counter++;
         return this.currentJoint;
+    }
+
+    grow(numSteps){
+        for (let i = 0; i < numSteps; i++){
+            this.step();
+        }
     }
 }
