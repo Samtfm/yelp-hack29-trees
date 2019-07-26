@@ -5,8 +5,10 @@
 			body { margin: 0; }
             button {
                 position: absolute;
-                width: 150px;
+                width: 500px;
                 height: 50px;
+                background-color: 'green';
+                font-size: 22px;
             }
         </style>
 		<script src="./two.js"></script>        
@@ -14,7 +16,7 @@
         <script src="./draw.js"></script>        
 	</head>
 	<body>
-        <button id="colonize-button">COLONIZE</button>
+        <button id="colonize-button">Grow!!!!!</button>
         <div id='two-js-canvas'></div>
 		<script>
             // init two
@@ -26,10 +28,11 @@
 
             rects = []
 
+            var isUserGeneratedTargetsEnabled = false;
             var numTargets = 100;
-            var captureRadius = 10;
-            var branchLength = 5;
-            var numJoints = 2000;
+            var captureRadius = 14;
+            var branchLength = 10;
+            var numJoints = 300;
 
             function generateRandomTargets() {
                 var targets = [];
@@ -46,39 +49,46 @@
                 return targets
             }
 
-            var targets = [];
+            // convert recursive structure to list of points
+            function listPoints(node) {
+                list = [{
+                    x: node.x,
+                    y: node.y,
+                    width: 5,
+                    height: 5,
+                }]
+                node.childNodes.forEach(child => {
+                    list = list.concat(listPoints(child))
+                });
+                return list
+            }
+
+            var userGeneratedTargets = [];
             function getUserGeneratedTargets(event) {
                 event.preventDefault()
                 var translatedX = (event.clientX - screenWidth/2);
                 var translatedY = screenHeight - event.clientY;
 
-                targets.push(new Node(translatedX, translatedY));
-                rects.push({
-                    x: translatedX,
-                    y: translatedY,
-                    width: 5,
-                    height: 5,
-                    color: 'rgb(200, 80, 120)',
-                })
+                userGeneratedTargets.push(new Node(translatedX, translatedY));
             }
             document.addEventListener("click", getUserGeneratedTargets);
 
-            document.getElementById('colonize-button').addEventListener('click', () => {
-                // targets = generateRandomTargets();
-                // run colonization
-                startNode = new Node(10,10);
-                colonization(targets, startNode, captureRadius, branchLength, numJoints);
-                draw(rects, startNode);
+            document.getElementById('colonize-button').addEventListener('click', (event) => {
+                event.preventDefault()
+                // create tree
+                startJoint = new Node(10,10);
+                var tree = new Tree(
+                    isUserGeneratedTargetsEnabled ? userGeneratedTargets : generateRandomTargets(),
+                    startJoint,
+                    captureRadius,
+                    branchLength,
+                    numJoints,
+                );
+                
+                animate(tree);
             })
 
 
-
-            function printMousePos(event) {
-              console.log("clientX: ", event.clientX)
-              console.log(" - clientY: ", event.clientY)
-            }
-
-            document.addEventListener("click", printMousePos);
 		</script>
 	</body>
 </html>
