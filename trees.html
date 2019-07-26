@@ -28,7 +28,6 @@
 
             rects = []
 
-            var isUserGeneratedTargetsEnabled = false;
             var numTargets = 100;
             var captureRadius = 14;
             var branchLength = 10;
@@ -49,46 +48,44 @@
                 return targets
             }
 
-            // convert recursive structure to list of points
-            function listPoints(node) {
-                list = [{
-                    x: node.x,
-                    y: node.y,
-                    width: 5,
-                    height: 5,
-                }]
-                node.childNodes.forEach(child => {
-                    list = list.concat(listPoints(child))
-                });
-                return list
-            }
-
-            var userGeneratedTargets = [];
-            function getUserGeneratedTargets(event) {
-                event.preventDefault()
-                var translatedX = (event.clientX - screenWidth/2);
-                var translatedY = screenHeight - event.clientY;
-
-                userGeneratedTargets.push(new Node(translatedX, translatedY));
-            }
-            document.addEventListener("click", getUserGeneratedTargets);
+            window.userGeneratedTargets = [];
+            sprayInterval = null;
+            var translatedMouseX = 0;
+            var translatedMouseY = 0;
+            document.addEventListener('mousemove', () => {
+                translatedMouseX = (event.clientX - screenWidth/2);
+                translatedMouseY = screenHeight - event.clientY;
+            });
+            document.addEventListener("mousedown", () => {
+                sprayInterval = setInterval(() => {
+                    var radius = Math.random()*100;
+                    var angle = Math.random()*2*Math.PI // Random angle between 0 & 2Pi (a circle)
+                    x = Math.cos(angle)*radius + translatedMouseX
+                    y = Math.sin(angle)*radius + translatedMouseY
+                    window.userGeneratedTargets.push(new Node(x, y));
+                }, 100)
+            });
+        
+            document.addEventListener("mouseup", () => {
+                clearInterval(sprayInterval);
+            });
             
             document.getElementById('colonize-button').addEventListener('click', (event) => {
+                clearInterval(sprayInterval)
                 event.preventDefault()
-                targets = [];
-                rects = [];
                 // create tree
                 startJoint = new Node(10,10);
-                var tree = new Tree(
-                    isUserGeneratedTargetsEnabled ? userGeneratedTargets : generateRandomTargets(),
+                window.tree = new Tree(
+                    window.userGeneratedTargets.length ? window.userGeneratedTargets : generateRandomTargets(),
                     startJoint,
                     captureRadius,
                     branchLength,
                     numJoints,
                 );
+                window.userGeneratedTargets = [];
                 
-                animate(tree);
             })
+            animate();
 
 
 		</script>

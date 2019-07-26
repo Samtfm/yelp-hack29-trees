@@ -56,19 +56,6 @@ function getInfluencingTargets(joint, targets){
     return influencingTargets;
 }
 
-// https://stackoverflow.com/questions/25582882/javascript-math-random-normal-distribution-gaussian-bell-curve/36481059#36481059
-// Standard Normal variate using Box-Muller transform.
-function randn_bm() {
-    var u = 0, v = 0;
-    while(u === 0) u = Math.random(); //Converting [0,1) to (0,1)
-    while(v === 0) v = Math.random();
-    return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
-}
-
-function TargetSort(a, b){
-    return a.closestDist - b.closestDist;
-}
-
 /**
  * Implements space colonization algorithm for procedurally generating trees.
  * Returns: startJoint. Null if preconditions violated.
