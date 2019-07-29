@@ -1,0 +1,135 @@
+<html>
+	<head>
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+        </style>
+		<script src="./space-colonization-3d.js"></script>        
+        <script src="./draw-3d.js"></script>     
+        <script src="https://threejs.org/build/three.js"></script>   
+	</head>
+	<body>
+		<script>
+            setTimeout(()=>{
+                window.location.reload()
+            },9000);
+			var scene = new THREE.Scene();
+			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+			
+            camera.position.z = 60;
+            camera.position.y = 3;
+            
+            // var group = new THREE.Group();
+
+            function getRandSpherePoint(scale=1) {
+                var d, x, y, z;
+                do {
+                    x = Math.random() * 2.0 - 1.0;
+                    y = Math.random() * 2.0 - 1.0;
+                    z = Math.random() * 2.0 - 1.0;
+                    d = x*x + y*y + z*z;
+                } while(d > 1.0);
+                return {x: x*scale, y: y*scale, z: z*scale};
+            }
+
+
+
+            var numTargets = 40;
+            var captureRadius = 3;
+            var branchLength = 2;
+            var numJoints = 400;
+
+            function generateRandomTargets() {
+                var targets = [];
+                // Initialize random targets
+                for (i = 0; i<numTargets; i++) {
+                    point = getRandSpherePoint(35);
+                    targets.push(new Node(point.x, point.y+10, point.z));
+                    // rects.push({x: x, y: y, width: 5, height: 5, color: 'rgb(200, 80, 120)'})
+                }
+                return targets
+            }
+
+            // window.userGeneratedTargets = [];
+            // sprayInterval = null;
+            // var translatedMouseX = 0;
+            // var translatedMouseY = 0;
+            // document.addEventListener('mousemove', () => {
+            //     translatedMouseX = (event.clientX - screenWidth/2);
+            //     translatedMouseY = screenHeight - event.clientY;
+            // });
+            // document.addEventListener("mousedown", () => {
+            //     sprayInterval = setInterval(() => {
+            //         var radius = Math.random()*100;
+            //         var angle = Math.random()*2*Math.PI // Random angle between 0 & 2Pi (a circle)
+            //         x = Math.cos(angle)*radius + translatedMouseX
+            //         y = Math.sin(angle)*radius + translatedMouseY
+            //         window.userGeneratedTargets.push(new Node(x, y));
+            //     }, 100)
+            // });
+        
+            // document.addEventListener("mouseup", () => {
+            //     clearInterval(sprayInterval);
+            // });
+            
+            // document.getElementById('colonize-button').addEventListener('click', (event) => {
+            //     event.preventDefault()
+            //     // create tree
+            //     startJoint = new Node(10,10);
+            //     window.tree = new Tree(
+            //         window.userGeneratedTargets.length ? window.userGeneratedTargets : generateRandomTargets(),
+            //         startJoint,
+            //         captureRadius,
+            //         branchLength,
+            //         numJoints,
+            //     );
+            //     window.userGeneratedTargets = [];
+                
+            // })
+            let startJoint = new Node(0,-50,0);
+            window.tree = new Tree(
+                generateRandomTargets(),
+                startJoint,
+                captureRadius,
+                branchLength,
+                numJoints,
+            );
+            
+            var i = 0
+            var upVector = new THREE.Vector3( 0, 1, 0 );
+            window.done = false;
+            window.group = paint();
+			var animate = function () {
+                i += 1;
+				requestAnimationFrame( animate );
+                if (window.tree) { 
+                   var result = window.tree.grow(1);
+                   if (!result){
+                       window.done = true;
+                   }
+                };
+                if (!window.done) {
+                    group = paint();
+                }
+                group.rotation.set(0, .005*i,0)
+                var scene = new THREE.Scene();
+                scene.add(group)
+
+                // var light = new THREE.PointLight( 0xff0000, 1, 100 );
+                // light.position.set( 50, 50, 50 );
+                // scene.add( light );
+
+				renderer.render( scene, camera );
+			};
+            
+            animate();
+
+
+		</script>
+	</body>
+</html>
